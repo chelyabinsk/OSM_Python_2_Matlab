@@ -146,36 +146,3 @@ for i in range(w):
 
 #sp.sparse.save_npz('sparse_matrix.npz', A)
 savemat('temp', {'M':A})
-
-
-
-    
-# Get altitudes
-
-    
-#plt.imshow(elevation, cmap='gist_earth', extent=[x0, x1, y1, y0])
-#plt.show()
-
-
-
-#for node in G.node.get:
-#    print(G.node.get(node))
-
-
-
-
-#origin = ox.get_nearest_node(G, (51.4573, -3.1837))
-#destination = ox.get_nearest_node(G, (51.45, -3.7009))
-#bbox = ox.bbox_from_point((50.4573, -3.1837), distance=100, project_utm=True)
-#
-#
-#G_projected = ox.project_graph(G)
-#ox.plot_graph(G_projected)
-#
-#
-#
-##route_by_length = nx.shortest_path(G, source=origin, target=destination, weight='length')
-#dijkstra = nx.dijkstra_path(G,source=origin, target=destination,weight="length")
-#print(nx.dijkstra_path_length(G,source=origin, target=destination,weight="length"))
-#fig, ax = ox.plot_graph_route(G, dijkstra, node_size=1)
-#
