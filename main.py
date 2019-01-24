@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 
 
-
 # Estimate elevation for each node
 # I am using weighted average from 4 nearest neighbours
+
+
+lat = 46.9868
+long = 12.1825
+distance = 8000  # Distance (meters) from the starting point along the network 
+road_type = "bike"  # drive, drive_service, walk, bike, all, all_private
 
 # Code from: https://stackoverflow.com/questions/24956653/read-elevation-using-gdal-python-from-geotiff
 from osgeo import gdal  # Elevation data
@@ -102,10 +107,6 @@ import math
 
 import csv
 
-lat = 46.9868
-long = 12.1825
-distance = 8000  # Distance (meters) from the starting point along the network 
-road_type = "bike"  # drive, drive_service, walk, bike, all, all_private
 
 G = ox.graph_from_point((lat,long), distance=distance, network_type=road_type)
 
