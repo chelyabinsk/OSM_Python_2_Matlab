@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-
 # Estimate elevation for each node
 # I am using weighted average from 4 nearest neighbours
-
 
 # Code from: https://stackoverflow.com/questions/24956653/read-elevation-using-gdal-python-from-geotiff
 from osgeo import gdal  # Elevation data
@@ -71,9 +69,7 @@ def get_distances(pos,corners):
     dBL = math.sqrt((x-xL)**2+(y-yB)**2)  # Bottom left distance
     dBR = math.sqrt((x-xR)**2+(y-yB)**2)  # Bottom right distance
     return(dTL,dTR,dBL,dBR)
-    
-    
-    
+
 def get_weighted_height(pos):
     # left-X, top-Y, right-X, bottom-Y, square_count from left-nX, 
     #   square_count_from_top-nY
@@ -106,9 +102,7 @@ def get_weighted_height(pos):
     #return(xL,yT,xR,yB,nX,nY,el_TL,el_TR,el_BL,el_BR,height)
     return height
 
-
 G = ox.graph_from_point((lat,long), distance=distance, network_type=road_type)
-
 
 # Get position of each node
 keys = ["row_num","alt"]  # # Get keys
