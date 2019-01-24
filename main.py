@@ -12,9 +12,9 @@ from scipy.io import savemat
 
 import csv
 
-lat = 50.9429
-long = 6.9619
-distance = 1000  # Distance (meters) from the starting point along the network 
+lat = 46.9868
+long = 12.1825
+distance = 8000  # Distance (meters) from the starting point along the network 
 road_type = "bike"  # drive, drive_service, walk, bike, all, all_private
 
 G = ox.graph_from_point((lat,long), distance=distance, network_type=road_type)
