@@ -26,8 +26,6 @@ ds = gdal.Open('srtm_39_03.tif')  # TIF elevation file
 band = ds.GetRasterBand(1)
 elevation = band.ReadAsArray()
 
-
-
 plt.imshow(elevation, cmap='gist_earth')
 plt.show()
 
@@ -50,14 +48,12 @@ def find_closest_corners(pos):
     
     yTop = y0 + dy*nY
     yBot = y0 + dy*(nY+1)
-
-        
+  
     nX = math.floor((x-x0)/dx)
     
     xLeft = x0 + dx*nX
     xRight = x0 + dx*(nX+1)
 
-    
     return(xLeft,yTop,xRight,yBot,nX,nY)
     
 def get_distances(pos,corners):
@@ -126,8 +122,7 @@ with open("node_pos_alt.csv","w",newline='') as f:
         w = csv.DictWriter(f,row.keys())
         w.writerow(row)
         count += 1
-
-
+        
 # Get adjacency matrix from the graph
 A = nx.adjacency_matrix(G)
 # Add weights
