@@ -5,13 +5,23 @@
 # I am using weighted average from 4 nearest neighbours
 
 
+# Code from: https://stackoverflow.com/questions/24956653/read-elevation-using-gdal-python-from-geotiff
+from osgeo import gdal  # Elevation data
+import matplotlib.pyplot as plt
+#from keys import google_elevation_api_key #replace this with your own API key
+import osmnx as ox, networkx as nx, numpy as np
+import scipy as sp
+from scipy.io import savemat
+import math
+#import elevation  # https://pypi.org/project/elevation/
+
+import csv
+
 lat = 46.9868
 long = 12.1825
 distance = 8000  # Distance (meters) from the starting point along the network 
 road_type = "bike"  # drive, drive_service, walk, bike, all, all_private
 
-# Code from: https://stackoverflow.com/questions/24956653/read-elevation-using-gdal-python-from-geotiff
-from osgeo import gdal  # Elevation data
 gdal.UseExceptions()
 
 ds = gdal.Open('srtm_39_03.tif')  # TIF elevation file
@@ -19,7 +29,7 @@ band = ds.GetRasterBand(1)
 elevation = band.ReadAsArray()
 
 
-import matplotlib.pyplot as plt
+
 plt.imshow(elevation, cmap='gist_earth')
 plt.show()
 
@@ -95,17 +105,6 @@ def get_weighted_height(pos):
         
     #return(xL,yT,xR,yB,nX,nY,el_TL,el_TR,el_BL,el_BR,height)
     return height
-
-
-
-#from keys import google_elevation_api_key #replace this with your own API key
-import osmnx as ox, networkx as nx, numpy as np
-import scipy as sp
-from scipy.io import savemat
-import math
-#import elevation  # https://pypi.org/project/elevation/
-
-import csv
 
 
 G = ox.graph_from_point((lat,long), distance=distance, network_type=road_type)
