@@ -1,58 +1,93 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Estimate elevation for each node
-# I am using weighted average from 4 nearest neighbours
-
-# Code from: https://stackoverflow.com/questions/24956653/read-elevation-using-gdal-python-from-geotiff
-from osgeo import gdal  # Elevation data
+from osgeo import gdal  # pip install gdal
 import matplotlib.pyplot as plt
-#from keys import google_elevation_api_key #replace this with your own API key
-import osmnx as ox, networkx as nx, numpy as np
+import numpy as np
+import osmnx as ox, geopandas as gpd, networkx as nx, numpy as np
+ox.config(log_file=True, log_console=True, use_cache=True)
 import scipy as sp
 from scipy.io import savemat
-import math
-#import elevation  # https://pypi.org/project/elevation/
-
 import csv
+import math
 
-lat = 46.9868
-long = 12.1825
-distance = 8000  # Distance (meters) from the starting point along the network 
-road_type = "bike"  # drive, drive_service, walk, bike, all, all_private
+def combine_tif(files):
+    global fullmap
+    gdal.UseExceptions()
+    
+    fullmap = 0 
+    
+    filenum = 0
+    
+    global x0G
+    global y0G
+    global dxG
+    global dyG
+    
+    for file in files:    
+        ds = gdal.Open('Data/Map Greenwich/' + file)  # TIF elevation file
+    
+        x0, dx, dxdy, y0, dydx, dy = ds.GetGeoTransform()
+        if(filenum == 0):
+            x0G = x0
+            y0G = y0
+            dyG = dy
+            dxG = dx
+        band = ds.GetRasterBand(1)
+        elevation = band.ReadAsArray()
+        
+        nrows, ncols = elevation.shape
+        
+        x1 = x0 + dx * ncols  # right corner most X
+        y1 = y0 + dy * nrows # lowest most y
+        
+        if(filenum == 0):
+            fullmap = elevation
+        elif(filenum == 1):
+            fullmap = np.hstack((fullmap,elevation))
+        elif(filenum == 2):
+            tmpmap = elevation
+        elif(filenum == 3):
+            tmpmap = np.hstack((tmpmap,elevation))
+            fullmap = np.vstack((fullmap,tmpmap))
+        
+        filenum +=1
+    
+    # Replace all negative values with 0
+    fullmap[fullmap < 0 ] = 0
 
-gdal.UseExceptions()
+    plt.imshow(fullmap, cmap='gist_earth')
+    plt.show()
+    
+#files = ["srtm_39_03.tif",
+#        "srtm_40_03.tif",
+#         "srtm_39_04.tif",
+#         "srtm_40_04.tif"]
+    
+files = ["srtm_36_02.tif",
+        "srtm_37_02.tif"]
+    
+# Check if full heightmap has been created
+if not "fullmap" in globals():
+    combine_tif(files)
 
-ds = gdal.Open('srtm_39_03.tif')  # TIF elevation file
-band = ds.GetRasterBand(1)
-elevation = band.ReadAsArray()
-
-plt.imshow(elevation, cmap='gist_earth')
-plt.show()
-
-nrows, ncols = elevation.shape
-
-# I'm making the assumption that the image isn't rotated/skewed/etc. 
-# This is not the correct method in general, but let's ignore that for now
-# If dxdy or dydx aren't 0, then this will be incorrect
-x0, dx, dxdy, y0, dydx, dy = ds.GetGeoTransform()
-
-x1 = x0 + dx * ncols  # right corner most X
-y1 = y0 + dy * nrows  # lowest most y
-
+    
 def find_closest_corners(pos):
     y,x = pos
     
     # Workout the closest 4 edges in the elevation
     
-    nY = math.floor((y-y0)/dy)
+    nY = math.floor((y-y0G)/dyG)
     
-    yTop = y0 + dy*nY
-    yBot = y0 + dy*(nY+1)
+    yTop = y0G + dyG*nY
+    yBot = y0G + dyG*(nY+1)
   
-    nX = math.floor((x-x0)/dx)
+    nX = math.floor((x-x0G)/dxG)
     
-    xLeft = x0 + dx*nX
-    xRight = x0 + dx*(nX+1)
+#    print(y,x,nX,nY)
+    
+    xLeft = x0G + dxG*nX
+    xRight = x0G + dxG*(nX+1)
 
     return(xLeft,yTop,xRight,yBot,nX,nY)
     
@@ -71,10 +106,10 @@ def get_weighted_height(pos):
     #   square_count_from_top-nY
     xL,yT,xR,yB,nX,nY = find_closest_corners(pos)
     
-    el_TL = elevation[nY,nY]  # Elevation Top Left
-    el_TR = elevation[nX+1,nY]  # Elevation Top Right
-    el_BL = elevation[nX,nY+1]  # Elevation Bottom Left
-    el_BR = elevation[nY+1,nY+1]  # Elevation Bottom Right
+    el_TL = fullmap[nY,nX]  # Elevation Top Left
+    el_TR = fullmap[nY,nX+1]  # Elevation Top Right
+    el_BL = fullmap[nY+1,nX]  # Elevation Bottom Left
+    el_BR = fullmap[nY+1,nX+1]  # Elevation Bottom Right
     
     # d1   d2
     
@@ -98,7 +133,16 @@ def get_weighted_height(pos):
     #return(xL,yT,xR,yB,nX,nY,el_TL,el_TR,el_BL,el_BR,height)
     return height
 
-G = ox.graph_from_point((lat,long), distance=distance, network_type=road_type)
+#{'y': 51.4850659, 'x': 0.0578418, 'osmid': 6150242294}
+#print(get_weighted_height((51.4850659,0.0578418)))
+
+# get the boundary polygons for multiple cities, save as shapefile, project to UTM, and plot
+place_names = ['Royal Borough of Greenwich, London, Greater London, England, United Kingdom']
+city_buffered = ox.gdf_from_places(place_names, buffer_dist=250)
+fig, ax = ox.plot_shape(city_buffered)
+
+G = ox.graph_from_place(place_names, network_type='bike')
+ox.plot_graph(G)
 
 # Get position of each node
 keys = ["row_num","alt"]  # # Get keys
@@ -122,12 +166,13 @@ with open("node_pos_alt.csv","w",newline='') as f:
         w = csv.DictWriter(f,row.keys())
         w.writerow(row)
         count += 1
-        
+print("Exporting matlab thing")
 # Get adjacency matrix from the graph
 A = nx.adjacency_matrix(G)
 # Add weights
 w,h = A.get_shape()
 for i in range(w):
+    print("{} out of {}".format(i,w) )
     for j in range(h):
         if(A[i,j] == 1):
             A[i,j] = G.get_edge_data(nodes[i],nodes[j])[0]["length"]
