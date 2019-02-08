@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# anaconda-navigator --reset
+
 from osgeo import gdal  # pip install gdal
 import matplotlib.pyplot as plt
 import numpy as np
@@ -127,18 +129,41 @@ def get_weighted_height(pos):
     elif(d4 == 0):
         height = el_BR
     else:
-        height = ((1/d1)*el_TL + (1/d2)*el_TR + (1/d3)*el_BL + (1/d4)*el_BR)/(
+        height = (
+                + (1/d2)*el_TR + (1/d3)*el_BL + (1/d4)*el_BR)/(
                     1/d1 + 1/d2 + 1/d3 + 1/d4)
         
     #return(xL,yT,xR,yB,nX,nY,el_TL,el_TR,el_BL,el_BR,height)
     return height
 
+
 #{'y': 51.4850659, 'x': 0.0578418, 'osmid': 6150242294}
 #print(get_weighted_height((51.4850659,0.0578418)))
 
 # get the boundary polygons for multiple cities, save as shapefile, project to UTM, and plot
-place_names = ['Royal Borough of Greenwich, London, Greater London, England, United Kingdom']
-city_buffered = ox.gdf_from_places(place_names, buffer_dist=250)
+#place_names = [
+#               {"type":"boundary",
+#                "country":"United Kingdom",
+#                "state":"Wales",
+#                "county":"Newport"},
+#                
+#                {"type":"boundary",
+#                "country":"United Kingdom",
+#                "state":"Wales",
+#                "county":"Cardiff"},
+#                 
+#                 {"type":"boundary",
+#                "country":"United Kingdom",
+#                "state":"Wales",
+#                "county":"Vale of Glamorgan"}
+#               ]
+place_names = [
+                #"London Borough of Newham, London, Greater London, England, United Kingdom",
+                #"Royal Borough of Lambeth, London, Greater London, England, United Kingdom",
+                "Greater London, England, United Kingdom"
+               ]
+
+city_buffered = ox.gdf_from_places(place_names, buffer_dist=0)
 fig, ax = ox.plot_shape(city_buffered)
 
 G = ox.graph_from_place(place_names, network_type='bike')
@@ -171,11 +196,10 @@ print("Exporting matlab thing")
 A = nx.adjacency_matrix(G)
 # Add weights
 w,h = A.get_shape()
-for i in range(w):
-    print("{} out of {}".format(i,w) )
-    for j in range(h):
-        if(A[i,j] == 1):
-            A[i,j] = G.get_edge_data(nodes[i],nodes[j])[0]["length"]
+nz = A.nonzero()
+for i in range(len(nz[0])):
+    print("{} out of {}. {}%".format(i,len(nz[0]),round(100*i/len(nz[0]),4)) )    
+    A[nz[0][i],nz[1][i]] = G.get_edge_data(nodes[nz[0][i]],nodes[nz[1][i]])[0]["length"]
 
 #sp.sparse.save_npz('sparse_matrix.npz', A)
 savemat('temp', {'M':A})
